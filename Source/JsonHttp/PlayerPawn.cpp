@@ -2,7 +2,7 @@
 
 
 #include "PlayerPawn.h"
-
+#include "http.h"
 #include "JsonObjectConverter.h"
 #include "ShapeActor.h"
 
@@ -67,6 +67,11 @@ void APlayerPawn::Tick(float DeltaTime)
 	{
 		LoadData();
 	}
+
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Four))
+	{
+		HttpGet();
+	}
 }
 
 // Called to bind functionality to input
@@ -78,21 +83,29 @@ void APlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void APlayerPawn::CreateShape()
 {
+	FShapeInfo info;
+	// 랜덤 위치
+	info.posistion = GetRandLocation();
+	// 랜덤 회전
+	info.rotation = GetRandRotation();
+	// 랜덤 크기
+	info.scale = FVector(FMath::RandRange(0.5f, 3.0f));
+	// 랜덤 모양
+	info.type = FMath::RandRange(0, 2);
+	// 위 정보를 이용해서 모양을 만들자.
+	CreateShape(info);
+}
+
+void APlayerPawn::CreateShape(FShapeInfo info)
+{
 	// ShapeActor 만들자.
 	AShapeActor* shape = GetWorld()->SpawnActor<AShapeActor>(shapeFactory);
-	// 랜덤 위치
-	FVector pos = GetRandLocation();
-	// 랜덤 회전
-	FRotator rot = GetRandRotation();
-	// 랜덤 크기
-	FVector scale = FVector(FMath::RandRange(0.5f, 3.0f));
-	// 랜덤 모양
-	int type = FMath::RandRange(0, 2);
-	// 위 정보를 이용해서 ShpaeActor 에게 설정
-	shape->SetActorLocation(pos);
-	shape->SetActorRotation(rot);
-	shape->SetActorScale3D(scale);
-	shape->Init(type);
+	
+	// info 정보를 이용해서 ShpaeActor 에게 설정
+	shape->SetActorLocation(info.posistion);
+	shape->SetActorRotation(info.rotation);
+	shape->SetActorScale3D(info.scale);
+	shape->Init(info.type);
 
 	allShapeActor.Add(shape);
 }
@@ -151,7 +164,56 @@ void APlayerPawn::SaveData()
 
 void APlayerPawn::LoadData()
 {
+	// test.txt 파일을 읽어오자
+	FString path = FString::Printf(TEXT("%s%s"), *FPaths::ProjectDir(), TEXT("test.txt"));
+	FString jsonString;
+	FFileHelper::LoadFileToString(jsonString, *path);
+	// 읽어온 JsonString 을 FShapeInfoArray 형태로 변환
+	FShapeInfoArray shapeInfoArray;
+	FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &shapeInfoArray);
+
+	// shapeInfoArray.data 갯수 만큼 모양을 만들자.
+	for (int32 i = 0; i < shapeInfoArray.data.Num(); i++)
+	{
+		CreateShape(shapeInfoArray.data[i]);
+	}
 }
+
+void APlayerPawn::HttpGet()
+{
+	// 서버에게 요청하는 객체 만들자.
+	FHttpRequestRef httpRequest = FHttpModule::Get().CreateRequest();
+	// 요청 URL - 서버가 알려줌
+	httpRequest->SetURL(TEXT("https://jsonplaceholder.typicode.com/comments"));
+	// 요청 방식
+	httpRequest->SetVerb(TEXT("GET"));
+	// 헤더를 설정
+	httpRequest->SetHeader(TEXT("Content-type"), TEXT("application/json"));
+	// 서버에게 요청을 한 후 응답이오면 호출되는 함수 등록
+	
+	httpRequest->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bProcessedSuccessfully)
+	{
+		//GetResponseCode : 200 - 성공, 400번대, 500번대 - 오류
+		
+		// 응답이 오면 실행
+		// 성공
+		if (bProcessedSuccessfully)
+		{
+			FString jsonString = Response->GetContentAsString();
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *jsonString);
+			// 결과를 가지고 무언가 처리를 하자			
+		}
+		// 실패
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("통신 실패 : %d"), Response->GetResponseCode());
+		}
+	});
+
+	// 요청을 보내자.
+	httpRequest->ProcessRequest();
+}
+
 
 // {
 // 	"data" : [

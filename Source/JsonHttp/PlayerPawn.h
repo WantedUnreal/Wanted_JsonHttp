@@ -96,10 +96,14 @@ public:
 	
 public:
 	void CreateShape();
+	void CreateShape(FShapeInfo info);
 	FVector GetRandLocation();
 	FRotator GetRandRotation();
 
 	void SaveData();
 	void LoadData();
 
+public:
+	void HttpGet();
+	
 };
