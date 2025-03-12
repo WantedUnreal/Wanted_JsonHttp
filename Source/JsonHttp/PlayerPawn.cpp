@@ -82,6 +82,11 @@ void APlayerPawn::Tick(float DeltaTime)
 	{
 		HttpPost();
 	}
+	
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Six))
+	{
+		mainUI->AddDownloadImage(TEXT("https://s.pstatic.net/static/www/mobile/edit/20250307_1095/upload_17413291381613apFo.png"));
+	}
 }
 
 // Called to bind functionality to input
