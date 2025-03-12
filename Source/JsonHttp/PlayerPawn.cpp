@@ -5,6 +5,7 @@
 #include "http.h"
 #include "JsonObjectConverter.h"
 #include "ShapeActor.h"
+#include "MainUI.h"
 
 // Sets default values
 APlayerPawn::APlayerPawn()
@@ -46,6 +47,10 @@ void APlayerPawn::BeginPlay()
 
 	// jsonString 데이터를 FUserInfo 로 변환
 	FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &friendInfos);
+
+	// MainUI 만들자
+	mainUI = CreateWidget<UMainUI>(GetWorld(), mainUIFactory);
+	mainUI->AddToViewport();
 }
 
 // Called every frame
@@ -287,7 +292,7 @@ void APlayerPawn::HttpFileUpload()
 	FString boundary = TEXT("----------- WantedKHJ");
 	// 헤더 설정
 	httpRequest->SetHeader(TEXT("Content-Type"), FString(TEXT("multipart/form-data; boundary=")) + boundary);
-
+	
 	// 멀티파트 데이터 설정
 	FString beginBoundary = FString("--") + boundary + TEXT("\r\n");
 	FString endBoundary = FString("\r\n--") + boundary + TEXT("--\r\n");

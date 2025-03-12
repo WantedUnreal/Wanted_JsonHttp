@@ -132,6 +132,11 @@ public:
 
 	UPROPERTY()
 	TArray<class AShapeActor*> allShapeActor;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UMainUI> mainUIFactory;
+	UPROPERTY()
+	class UMainUI* mainUI;
 	
 public:
 	void CreateShape();
@@ -150,4 +155,6 @@ public:
 	void HttpPost();
 	void HttpFileUpload();
 	TArray<uint8> FStringToUint8(FString str);
+
+	
 };
