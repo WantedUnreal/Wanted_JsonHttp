@@ -148,4 +148,6 @@ public:
 	void HttpGet();
 
 	void HttpPost();
+	void HttpFileUpload();
+	TArray<uint8> FStringToUint8(FString str);
 };

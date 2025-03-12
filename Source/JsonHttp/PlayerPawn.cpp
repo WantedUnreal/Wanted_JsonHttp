@@ -72,6 +72,11 @@ void APlayerPawn::Tick(float DeltaTime)
 	{
 		HttpGet();
 	}
+
+	if (GetWorld()->GetFirstPlayerController()->WasInputKeyJustPressed(EKeys::Five))
+	{
+		HttpPost();
+	}
 }
 
 // Called to bind functionality to input
@@ -234,10 +239,11 @@ void APlayerPawn::HttpPost()
 	info.body = TEXT("놀고 싶다");
 	info.userId = 1234;
 	FString jsonString;
-	FJsonObjectConverter::UStructToJsonObjectString(&info, jsonString);
+	FJsonObjectConverter::UStructToJsonObjectString(info, jsonString);
+
+	httpRequest->SetContentAsString(jsonString);
 	
 	// 서버에게 요청을 한 후 응답이오면 호출되는 함수 등록
-	
 	httpRequest->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bProcessedSuccessfully)
 	{
 		//GetResponseCode : 200 - 성공, 400번대, 500번대 - 오류
@@ -258,6 +264,76 @@ void APlayerPawn::HttpPost()
 
 	// 요청을 보내자.
 	httpRequest->ProcessRequest();
+}
+
+// 파일 업로드 ( multiparts form-data 로 주세요, byte로 주세요. )
+void APlayerPawn::HttpFileUpload()
+{
+	// 업로드 할 파일을 읽자.
+	FString path = FPaths::ProjectDir() + TEXT("test.jpeg");
+	TArray<uint8> fileData;
+	if (FFileHelper::LoadFileToArray(fileData, *path) == false)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("파일이 없거나 읽지 못 함"));
+		return;
+	}
+
+	// HTTP 요청 생성
+	FHttpRequestRef httpRequest = FHttpModule::Get().CreateRequest();
+	httpRequest->SetURL(TEXT("192.168.0.30:8080/iamge"));
+	httpRequest->SetVerb(TEXT("POST"));
+
+	// 멀티파트 바운더리 설정
+	FString boundary = TEXT("----------- WantedKHJ");
+	// 헤더 설정
+	httpRequest->SetHeader(TEXT("Content-Type"), FString(TEXT("multipart/form-data; boundary=")) + boundary);
+
+	// 멀티파트 데이터 설정
+	FString beginBoundary = FString("--") + boundary + TEXT("\r\n");
+	FString endBoundary = FString("\r\n--") + boundary + TEXT("--\r\n");
+	FString fileHeader = FString("Content-Disposition: form-data; name=\"file\"; filename=\"filename\"")
+						+ TEXT("\r\n")
+						+ TEXT("Content-Type: application/octet-stream\r\n\r\n");
+
+	// 위 정보를 조합 (beginBoundary - fileHeader - fileData - endBoundary)
+	TArray<uint8> postData;
+	postData.Append(FStringToUint8(beginBoundary));
+	postData.Append(FStringToUint8(fileHeader));
+	postData.Append(fileData);
+	postData.Append(FStringToUint8(endBoundary));
+
+	httpRequest->SetContent(postData);
+
+	// 서버에게 요청을 한 후 응답이오면 호출되는 함수 등록
+	httpRequest->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bProcessedSuccessfully)
+	{
+		//GetResponseCode : 200 - 성공, 400번대, 500번대 - 오류
+		
+		// 응답이 오면 실행
+		// 성공
+		if (bProcessedSuccessfully)
+		{			
+			UE_LOG(LogTemp, Warning, TEXT("업로드 성공"));
+		}
+		// 실패
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("업로드 실패 : %d"), Response->GetResponseCode());
+		}
+	});
+
+	// 요청을 보내자.
+	httpRequest->ProcessRequest();
+}
+
+TArray<uint8> APlayerPawn::FStringToUint8(FString str)
+{
+	TArray<uint8> outBytes;
+
+	FTCHARToUTF8 converted(*str);
+	outBytes.Append(reinterpret_cast<const uint8*>(converted.Get()), converted.Length());
+
+	return outBytes;
 }
 
 
