@@ -11,7 +11,7 @@ public class JsonHttp : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
-			"Json", "JsonUtilities", "HTTP"
+			"Json", "JsonUtilities", "HTTP", "UMG"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
