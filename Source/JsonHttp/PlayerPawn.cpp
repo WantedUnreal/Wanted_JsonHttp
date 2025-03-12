@@ -199,9 +199,55 @@ void APlayerPawn::HttpGet()
 		// 성공
 		if (bProcessedSuccessfully)
 		{
+			FString jsonString = FString::Printf(TEXT("{ \"data\" : %s}"), *Response->GetContentAsString());
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *jsonString);
+			
+			// 결과를 가지고 무언가 처리를 하자
+			// jsonString --> FCommentInfoArray 로 변환
+			FJsonObjectConverter::JsonObjectStringToUStruct(jsonString, &allCommnet);
+		}
+		// 실패
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("통신 실패 : %d"), Response->GetResponseCode());
+		}
+	});
+
+	// 요청을 보내자.
+	httpRequest->ProcessRequest();
+}
+
+void APlayerPawn::HttpPost()
+{
+	// 서버에게 요청하는 객체 만들자.
+	FHttpRequestRef httpRequest = FHttpModule::Get().CreateRequest();
+	// 요청 URL - 서버가 알려줌
+	httpRequest->SetURL(TEXT("https://jsonplaceholder.typicode.com/posts"));
+	// 요청 방식
+	httpRequest->SetVerb(TEXT("POST"));
+	// 헤더를 설정
+	httpRequest->SetHeader(TEXT("Content-type"), TEXT("application/json"));
+
+	// 서버에게 보내고 싶은 데이터 값 (Json)
+	FPostInfo info;
+	info.title = TEXT("집에가고 싶다");
+	info.body = TEXT("놀고 싶다");
+	info.userId = 1234;
+	FString jsonString;
+	FJsonObjectConverter::UStructToJsonObjectString(&info, jsonString);
+	
+	// 서버에게 요청을 한 후 응답이오면 호출되는 함수 등록
+	
+	httpRequest->OnProcessRequestComplete().BindLambda([this](FHttpRequestPtr Request, FHttpResponsePtr Response, bool bProcessedSuccessfully)
+	{
+		//GetResponseCode : 200 - 성공, 400번대, 500번대 - 오류
+		
+		// 응답이 오면 실행
+		// 성공
+		if (bProcessedSuccessfully)
+		{
 			FString jsonString = Response->GetContentAsString();
 			UE_LOG(LogTemp, Warning, TEXT("%s"), *jsonString);
-			// 결과를 가지고 무언가 처리를 하자			
 		}
 		// 실패
 		else

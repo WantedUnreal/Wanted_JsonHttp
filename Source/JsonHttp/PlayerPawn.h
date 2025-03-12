@@ -60,6 +60,45 @@ public:
 	TArray<FShapeInfo> data;
 };
 
+USTRUCT()
+struct FCommentInfo
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(VisibleAnywhere)
+	int32 postId;
+	UPROPERTY(VisibleAnywhere)
+	int32 id;
+	UPROPERTY(VisibleAnywhere)
+	FString name;
+	UPROPERTY(VisibleAnywhere)
+	FString email;
+	UPROPERTY(VisibleAnywhere)
+	FString body;
+};
+
+USTRUCT()
+struct FCommentInfoArray
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(VisibleAnywhere)
+	TArray<FCommentInfo> data;
+};
+
+USTRUCT()
+struct FPostInfo
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	FString title;
+	UPROPERTY()
+	FString body;
+	UPROPERTY()
+	int32 userId;
+};
+
 
 UCLASS()
 class JSONHTTP_API APlayerPawn : public ADefaultPawn
@@ -104,6 +143,9 @@ public:
 	void LoadData();
 
 public:
+	UPROPERTY(VisibleAnywhere)
+	FCommentInfoArray allCommnet;
 	void HttpGet();
-	
+
+	void HttpPost();
 };
