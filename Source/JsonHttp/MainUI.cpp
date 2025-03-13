@@ -9,6 +9,6 @@
 void UMainUI::AddDownloadImage(FString url)
 {
 	UDownloadImageUI* image = CreateWidget<UDownloadImageUI>(GetWorld(), donwnloadImageUIFactory);
-	image->StartDownload(url);
+	image->StartDownload2(url);
 	imageList->AddChild(image);
 }

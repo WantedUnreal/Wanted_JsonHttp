@@ -23,4 +23,6 @@ public:
 	// 다운로드 완료시 호출되는 함수
 	UFUNCTION()
 	void OnDownloadComplete(class UTexture2DDynamic* texture);
+
+	void StartDownload2(FString url);
 };
